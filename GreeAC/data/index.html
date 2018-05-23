@@ -81,7 +81,7 @@ function parseOut( resp )
 
 	if( typeof params['T'] !== 'undefined' )
 	{
-		temperature = +params['T'];
+		temperature = params['T'];
 		byid('temp_slider').value = temperature;
 		byid('temp_val').innerHTML = temperature;
 	}
