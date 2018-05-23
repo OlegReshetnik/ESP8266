@@ -37,8 +37,6 @@ Ticker led;
 
 IRGreeAC gree(IR_LED);
 
-uint16_t temperature;
-
 void InitWiFi()
 {
 	const char * WiFi_Name = "Oleg_Home";
@@ -59,16 +57,30 @@ void doLight() { digitalWrite( LIGHT_PIN, !digitalRead( LIGHT_PIN ) ); }
 
 void climate()
 {
-	bool is_send = false;
-	if( server.hasArg("P") ) { gree.setPower( (uint8_t)server.arg("P").toInt() ); is_send = true; }
-	if( server.hasArg("M") ) { gree.setMode( (uint8_t)server.arg("M").toInt() ); is_send = true; }
-	if( server.hasArg("F") ) { gree.setFan( (uint8_t)server.arg("F").toInt() ); is_send = true; }
-	if( server.hasArg("T") ) { gree.setTemp( (uint8_t)server.arg("T").toInt() ); is_send = true; }
-	if( server.hasArg("S") ) { gree.setSwingVertical( (bool)server.arg("S").toInt(), (uint8_t)server.arg("S").toInt() ); is_send = true; }
-	if( server.hasArg("SL") ) { gree.setSleep( (bool)server.arg("SL").toInt() ); is_send = true; }
-	if( server.hasArg("L") ) doLight();
-	if( is_send ) gree.send();
-	server.send( 200, FPSTR(text_plain), "L=" + String(statusLight() ? '1' : '0') + "&T=" + String((int)temperature) );
+	if( server.hasArg("info") )
+	{
+		server.send( 200, FPSTR(text_plain),
+		"P=" + String(gree.getPower()?'1':'0') +
+		"&M=" + String((int)gree.getMode() ) +
+		"&F=" + String((int)gree.getFan() ) +
+		"&T=" + String((int)gree.getTemp() ) +
+		"&S=" + String(gree.getSwingVerticalAuto()?'1':'0') +
+		"&SL=" + String(gree.getSleep()?'1':'0') +
+		"&L=" + String(statusLight() ? '1' : '0') );
+	}
+	else
+	{
+		bool is_send = false;
+		if( server.hasArg("P") ) { gree.setPower( (bool)server.arg("P").toInt() ); is_send = true; }
+		if( server.hasArg("M") ) { gree.setMode( (uint8_t)server.arg("M").toInt() ); is_send = true; }
+		if( server.hasArg("F") ) { gree.setFan( (uint8_t)server.arg("F").toInt() ); is_send = true; }
+		if( server.hasArg("T") ) { gree.setTemp( (uint8_t)server.arg("T").toInt() ); is_send = true; }
+		if( server.hasArg("S") ) { gree.setSwingVertical( (bool)server.arg("S").toInt(), (uint8_t)server.arg("S").toInt() ); is_send = true; }
+		if( server.hasArg("SL") ) { gree.setSleep( (bool)server.arg("SL").toInt() ); is_send = true; }
+		if( server.hasArg("L") ) doLight();
+		if( is_send && gree.getPower() ) gree.send();
+		server.send( 200, FPSTR(text_plain), "L=" + String(statusLight() ? '1' : '0') );
+	}
 }
 
 void setup(void)

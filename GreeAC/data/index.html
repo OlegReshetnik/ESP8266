@@ -8,7 +8,7 @@
 body, tr, td, input, select { font-family: Verdana, Arial, Helvetica; font-size: large; color: #000000; }
 </style>
 </head>
-<body>
+<body onload="doInfo();">
 <script>
 var last_time = new Date().getTime();
 var power = 0;
@@ -40,7 +40,75 @@ function parseOut( resp )
 		}
 	}
 
-	if( typeof params['T'] !== 'undefined' ) byid('home_temp').innerHTML = params['T'] + " \u00B0C";
+	if( typeof params['P'] !== 'undefined' )
+	{
+		power = params['P'];
+		_id = byid('power_but');
+		if( power == 1 )
+		{
+			_id.style.color = 'red';
+			_id.innerHTML = 'Выключить Кондиционер';
+		}
+		else
+		{
+			_id.style.color = 'black';
+			_id.innerHTML = 'Включить Кондиционер';
+		}
+	}
+
+	if( typeof params['M'] !== 'undefined' )
+	{
+		byid('m_auto').style.color = 'black';
+		byid('m_cool').style.color = 'black';
+		byid('m_dry').style.color = 'black';
+		byid('m_fan').style.color = 'black';
+		byid('m_heat').style.color = 'black';
+		mode = params['M'];
+		if( mode == 0 ) byid('m_auto').style.color = 'red';
+		else if( mode == 1 ) byid('m_cool').style.color = 'red';
+		else if( mode == 2 ) byid('m_dry').style.color = 'red';
+		else if( mode == 3 ) byid('m_fan').style.color = 'red';
+		else if( mode == 4 ) byid('m_heat').style.color = 'red';
+	}
+
+	if( typeof params['F'] !== 'undefined' )
+	{
+		fan = params['F'];
+		if( fan == 0 ) byid('fan_val').innerHTML = 'Авто';
+		else byid('fan_val').innerHTML = fan;
+		byid('fan_slider').value = fan;
+	}
+
+	if( typeof params['T'] !== 'undefined' )
+	{
+		temperature = +params['T'];
+		byid('temp_slider').value = temperature;
+		byid('temp_val').innerHTML = temperature;
+	}
+
+	if( typeof params['S'] !== 'undefined' )
+	{
+		swing = params['S'];
+		if( swing == 0 ) { byid('v_man').style.color = 'red'; byid('v_sving').style.color = 'black'; }
+		else { byid('v_man').style.color = 'black'; byid('v_sving').style.color = 'red'; }
+	}
+
+	if( typeof params['SL'] !== 'undefined' )
+	{
+		sleep = params['SL'];
+		_id = byid('sleep_but');
+		if( sleep == 1 )
+		{
+			_id.style.color = 'red';
+			_id.value = 'SleepOff';
+		}
+		else
+		{
+			_id.style.color = 'black';
+			_id.value = 'SleepOn';
+		}
+	}
+
 }
 
 function airPumpCmd()
@@ -66,76 +134,48 @@ function doLight()
 	xhr.send();
 }
 
+function doInfo()
+{
+	var xhr = new XMLHttpRequest();
+	var str = '/climate?info=1';
+	xhr.open('GET', str, true);
+	xhr.onload = function() { parseOut( xhr.responseText ); };
+	xhr.send();
+}
+
 function doPower()
 {
-	power = (power == 1) ? 0 : 1;
-	_id = byid('power_but');
-	if( power == 1 )
-	{
-		_id.style.color = 'red';
-		_id.innerHTML = 'Выключить Кондиционер';
-	}
-	else
-	{
-		_id.style.color = 'black';
-		_id.innerHTML = 'Включить Кондиционер';
-	}
+	parseOut( 'P=' + ( (power == 1) ? '0' : '1' ) );
 	airPumpCmd();
 }
 
 function doTemp()
 {
-	temperature = byid('temp_slider').value;
-	byid('temp_val').innerHTML = temperature;
+	parseOut( 'T=' + byid('temp_slider').value );
 	airPumpCmd();
 }
 
 function doFan()
 {
-	fan = byid('fan_slider').value;
-	if( fan == 0 ) byid('fan_val').innerHTML = 'Авто';
-	else byid('fan_val').innerHTML = fan;
+	parseOut( 'F=' + byid('fan_slider').value );
 	airPumpCmd();
 }
 
 function doMode( m )
 {
-	byid('m_auto').style.color = 'black';
-	byid('m_cool').style.color = 'black';
-	byid('m_dry').style.color = 'black';
-	byid('m_fan').style.color = 'black';
-	byid('m_heat').style.color = 'black';
-	mode = m;
-	if( m == 0 ) byid('m_auto').style.color = 'red';
-	else if( m == 1 ) byid('m_cool').style.color = 'red';
-	else if( m == 2 ) byid('m_dry').style.color = 'red';
-	else if( m == 3 ) byid('m_fan').style.color = 'red';
-	else if( m == 4 ) byid('m_heat').style.color = 'red';
+	parseOut( 'M=' + m );
 	airPumpCmd();
 }
 
 function doSwing( s )
 {
-	swing = s;
-	if( s == 0 ) { byid('v_man').style.color = 'red'; byid('v_sving').style.color = 'black'; }
-	else { byid('v_man').style.color = 'black'; byid('v_sving').style.color = 'red'; }
+	parseOut( 'S=' + s );
 	airPumpCmd();
 }
 
 function doSleep()
 {
-	sleep = (sleep == 1) ? 0 : 1;
-	_id = byid('sleep_but');
-	if( sleep == 1 )
-	{
-		_id.style.color = 'red';
-		_id.value = 'SleepOff';
-	}
-	else
-	{
-		_id.style.color = 'black';
-		_id.value = 'SleepOn';
-	}
+	parseOut( 'SL=' + ( (sleep == 1) ? '0' : '1' ) );
 	airPumpCmd();
 }
 
@@ -168,8 +208,5 @@ function doSleep()
 <table style="width:300px"><tr><td id="light_text" style="height:120px; color:red">Выключить свет</td></tr></table>
 </button>
 <br />
-<div id="home_temp">
-100
-</div> 
 </body>
 </html>
