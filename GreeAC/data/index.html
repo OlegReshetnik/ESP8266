@@ -1,0 +1,175 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Свет и Кондиционер</title>
+<style type="text/css">
+body, tr, td, input, select { font-family: Verdana, Arial, Helvetica; font-size: large; color: #000000; }
+</style>
+</head>
+<body>
+<script>
+var last_time = new Date().getTime();
+var power = 0;
+var mode = 1;
+var fan = 1;
+var temperature = 22
+var swing = 0;
+var sleep = 0;
+
+function byid( name ) { return document.getElementById( name ); }
+
+function parseOut( resp )
+{
+	var params = resp
+	.split('&').reduce( function(p,e) { var a = e.split('='); p[ a[0] ] = a[1]; return p; }, {} );
+
+	if( typeof params['L'] !== 'undefined' )
+	{
+		_id = byid('light_text');
+		if( params['L'] == 1 )
+		{
+			_id.style.color = 'red';
+			_id.innerHTML = 'Выключить свет';
+		}
+		else
+		{
+			_id.style.color = 'black';
+			_id.innerHTML = 'Включить свет';
+		}
+	}
+
+	if( typeof params['T'] !== 'undefined' ) byid('home_temp').innerHTML = params['T'] + " \u00B0C";
+}
+
+function airPumpCmd()
+{
+	var current = new Date().getTime();
+	if( ( current - last_time ) > 300 )
+	{
+		last_time = current;
+		var xhr = new XMLHttpRequest();
+		var str = '/climate?P=' + power + '&M=' + mode + '&F=' + fan + '&T=' + temperature + '&S=' + swing + '&SL=' + sleep;
+		xhr.onload = function() { parseOut( xhr.responseText ); };
+		xhr.open('GET', str, true);
+		xhr.send();
+	}
+}
+
+function doLight()
+{
+	var xhr = new XMLHttpRequest();
+	var str = '/climate?L=1';
+	xhr.open('GET', str, true);
+	xhr.onload = function() { parseOut( xhr.responseText ); };
+	xhr.send();
+}
+
+function doPower()
+{
+	power = (power == 1) ? 0 : 1;
+	_id = byid('power_but');
+	if( power == 1 )
+	{
+		_id.style.color = 'red';
+		_id.innerHTML = 'Выключить Кондиционер';
+	}
+	else
+	{
+		_id.style.color = 'black';
+		_id.innerHTML = 'Включить Кондиционер';
+	}
+	airPumpCmd();
+}
+
+function doTemp()
+{
+	temperature = byid('temp_slider').value;
+	byid('temp_val').innerHTML = temperature;
+	airPumpCmd();
+}
+
+function doFan()
+{
+	fan = byid('fan_slider').value;
+	if( fan == 0 ) byid('fan_val').innerHTML = 'Авто';
+	else byid('fan_val').innerHTML = fan;
+	airPumpCmd();
+}
+
+function doMode( m )
+{
+	byid('m_auto').style.color = 'black';
+	byid('m_cool').style.color = 'black';
+	byid('m_dry').style.color = 'black';
+	byid('m_fan').style.color = 'black';
+	byid('m_heat').style.color = 'black';
+	mode = m;
+	if( m == 0 ) byid('m_auto').style.color = 'red';
+	else if( m == 1 ) byid('m_cool').style.color = 'red';
+	else if( m == 2 ) byid('m_dry').style.color = 'red';
+	else if( m == 3 ) byid('m_fan').style.color = 'red';
+	else if( m == 4 ) byid('m_heat').style.color = 'red';
+	airPumpCmd();
+}
+
+function doSwing( s )
+{
+	swing = s;
+	if( s == 0 ) { byid('v_man').style.color = 'red'; byid('v_sving').style.color = 'black'; }
+	else { byid('v_man').style.color = 'black'; byid('v_sving').style.color = 'red'; }
+	airPumpCmd();
+}
+
+function doSleep()
+{
+	sleep = (sleep == 1) ? 0 : 1;
+	_id = byid('sleep_but');
+	if( sleep == 1 )
+	{
+		_id.style.color = 'red';
+		_id.value = 'SleepOff';
+	}
+	else
+	{
+		_id.style.color = 'black';
+		_id.value = 'SleepOn';
+	}
+	airPumpCmd();
+}
+
+</script>
+<button onclick="doPower();">
+<table style="width:300px"><tr><td id="power_but" style="height:120px">Включить Кондиционер</td></tr></table>
+</button>
+<br />
+Температура:
+<br />
+<input id="temp_slider" style="width:250px" type="range" min="16" max="30" value="22" oninput="doTemp();" />
+<span id="temp_val">22</span>
+<br />
+Скорость:
+<br />
+<input id="fan_slider" style="width:250px" type="range" min="0" max="3" value="1" oninput="doFan();" />
+<span id="fan_val">1</span>
+<br />
+<input type="button" id="m_auto" style="height:40px" value="Авт" onclick=doMode(0) />
+<input type="button" id="m_cool" style="height:40px; color:red" value="Холод" onclick=doMode(1) />
+<input type="button" id="m_dry" style="height:40px" value="Суш" onclick=doMode(2) />
+<input type="button" id="m_fan" style="height:40px" value="Вет" onclick=doMode(3) />
+<input type="button" id="m_heat" style="height:40px" value="Тепло" onclick=doMode(4) />
+<br />
+<input type="button" id="v_man" style="height:100px; color:red" value="Неподвижно" onclick=doSwing(0) />
+<input type="button" id="v_sving" style="height:100px" value="Качается" onclick=doSwing(1) />
+<input type="button" id="sleep_but" style="height:100px" value="SleepOn" onclick=doSleep() />
+<br />
+<button onclick="doLight();">
+<table style="width:300px"><tr><td id="light_text" style="height:120px; color:red">Выключить свет</td></tr></table>
+</button>
+<br />
+<div id="home_temp">
+100
+</div> 
+</body>
+</html>
