@@ -68,18 +68,20 @@ void climate()
 		"&SL=" + String(gree.getSleep()?'1':'0') +
 		"&L=" + String(statusLight() ? '1' : '0') );
 	}
-	else
+	else if( server.hasArg("L") )
 	{
-		bool is_send = false;
-		if( server.hasArg("P") ) { gree.setPower( (bool)server.arg("P").toInt() ); is_send = true; }
-		if( server.hasArg("M") ) { gree.setMode( (uint8_t)server.arg("M").toInt() ); is_send = true; }
-		if( server.hasArg("F") ) { gree.setFan( (uint8_t)server.arg("F").toInt() ); is_send = true; }
-		if( server.hasArg("T") ) { gree.setTemp( (uint8_t)server.arg("T").toInt() ); is_send = true; }
-		if( server.hasArg("S") ) { gree.setSwingVertical( (bool)server.arg("S").toInt(), (uint8_t)server.arg("S").toInt() ); is_send = true; }
-		if( server.hasArg("SL") ) { gree.setSleep( (bool)server.arg("SL").toInt() ); is_send = true; }
-		if( server.hasArg("L") ) doLight();
-		if( is_send && gree.getPower() ) gree.send();
+		doLight();
 		server.send( 200, FPSTR(text_plain), "L=" + String(statusLight() ? '1' : '0') );
+	}
+	else {
+		if( server.hasArg("P") ) gree.setPower( (bool)server.arg("P").toInt() );
+		if( server.hasArg("M") ) gree.setMode( (uint8_t)server.arg("M").toInt() );
+		if( server.hasArg("F") ) gree.setFan( (uint8_t)server.arg("F").toInt() );
+		if( server.hasArg("T") ) gree.setTemp( (uint8_t)server.arg("T").toInt() );
+		if( server.hasArg("S") ) gree.setSwingVertical( (bool)server.arg("S").toInt(), (uint8_t)server.arg("S").toInt() );
+		if( server.hasArg("SL") ) gree.setSleep( (bool)server.arg("SL").toInt() );
+		gree.send();
+		server.send( 200, FPSTR(text_plain), "" );
 	}
 }
 
